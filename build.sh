@@ -6,7 +6,7 @@ echo "Starting Render build process..."
 
 # Install Python dependencies properly for Render
 echo "Installing Python dependencies..."
-pip install -r requirements.txt
+pip install -r requirement.txt
 
 # Verify installations
 echo "Verifying package installations..."
