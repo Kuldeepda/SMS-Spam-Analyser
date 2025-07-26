@@ -6,7 +6,7 @@ echo "Starting build process..."
 
 # Install Python dependencies
 echo "Installing Python dependencies..."
-pip install --no-cache-dir -r requirements.txt
+pip install --no-cache-dir -r requirement.txt
 
 # Verify critical packages
 echo "Verifying package installations..."
