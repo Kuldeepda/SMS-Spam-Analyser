@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Install Python dependencies
-pip install -r requirements.txt
+pip install -r requirement.txt
 
 # Create NLTK data directory
 mkdir -p nltk_data
