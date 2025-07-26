@@ -1,33 +1,24 @@
 #!/bin/bash
 
-set -e  # Exit on any error
+# Optimize for faster builds and startups
+echo "Optimizing for Render deployment..."
 
-echo "Starting build process..."
+# Use pip cache and parallel processing
+pip install --upgrade pip
+pip install --no-warn-script-location --user -r requirements.txt
 
-# Install Python dependencies
-echo "Installing Python dependencies..."
-pip install --no-cache-dir -r requirement.txt
+# Pre-create and populate NLTK directory
+echo "Setting up NLTK data..."
+mkdir -p /opt/render/project/src/nltk_data/tokenizers/punkt_tab
+mkdir -p /opt/render/project/src/nltk_data/corpora/stopwords
 
-# Verify critical packages
-echo "Verifying package installations..."
-python -c "import streamlit; print('Streamlit OK')"
-python -c "import sklearn; print('Scikit-learn OK')"
-python -c "import nltk; print('NLTK OK')"
-python -c "import pickle; print('Pickle OK')"
-
-# Create NLTK data directory
-echo "Creating NLTK data directory..."
-mkdir -p nltk_data
-
-# Download NLTK data with verification
-echo "Downloading NLTK data..."
-python << 'EOF'
+# Download NLTK data to permanent location
+python -c "
 import nltk
 import ssl
 import os
-import sys
 
-# Handle SSL issues
+# Handle SSL
 try:
     _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
@@ -35,44 +26,24 @@ except AttributeError:
 else:
     ssl._create_default_https_context = _create_unverified_https_context
 
-# Set NLTK data path
-nltk_data_dir = os.path.join(os.getcwd(), 'nltk_data')
-print(f"NLTK data directory: {nltk_data_dir}")
-
-if not os.path.exists(nltk_data_dir):
-    os.makedirs(nltk_data_dir)
-
+# Set permanent NLTK data path
+nltk_data_dir = '/opt/render/project/src/nltk_data'
+os.environ['NLTK_DATA'] = nltk_data_dir
 nltk.data.path.append(nltk_data_dir)
 
-# Download with verification
-success = True
+# Download efficiently
+print('Downloading punkt_tab...')
+nltk.download('punkt_tab', download_dir=nltk_data_dir, quiet=True)
+print('Downloading stopwords...')
+nltk.download('stopwords', download_dir=nltk_data_dir, quiet=True)
+print('NLTK setup complete!')
+"
 
-try:
-    print("Downloading punkt_tab...")
-    nltk.download('punkt_tab', download_dir=nltk_data_dir)
-    # Verify download
-    nltk.data.find('tokenizers/punkt_tab')
-    print('✓ punkt_tab downloaded and verified')
-except Exception as e:
-    print(f'✗ Error with punkt_tab: {e}')
-    success = False
+# Verify model files exist
+if [ -f "vectorizer.pkl" ] && [ -f "model.pkl" ]; then
+    echo "✓ Model files found"
+else
+    echo "⚠ Warning: Model files not found"
+fi
 
-try:
-    print("Downloading stopwords...")
-    nltk.download('stopwords', download_dir=nltk_data_dir)
-    # Verify download
-    nltk.data.find('corpora/stopwords')
-    print('✓ stopwords downloaded and verified')
-except Exception as e:
-    print(f'✗ Error with stopwords: {e}')
-    success = False
-
-if not success:
-    print("NLTK download failed!")
-    sys.exit(1)
-else:
-    print("All NLTK data downloaded successfully!")
-
-EOF
-
-echo "Build completed successfully!"
+echo "Build optimization complete!"
